@@ -5,12 +5,14 @@ describe Oystercard do
   subject(:oyster_no_money) { described_class.new }
   subject(:oyster_max_balance) { described_class.new }
 
+  let(:entry_station){ double :entry_station }
+
   before(:each) do
     oyster_max_balance.top_up(Oystercard::MAX_BALANCE)
   end
 
   context '#balance' do
-    it 'should initialize with a 90 balance' do
+    it 'should initialize with a 0 balance' do
       expect(oyster_no_money.balance).to eq 0
     end
   end
@@ -19,7 +21,7 @@ describe Oystercard do
     it { is_expected.to respond_to(:top_up).with(1).argument }
 
     it 'should add to balance' do
-      oyster_max_balance.touch_in
+      oyster_max_balance.touch_in(entry_station)
       oyster_max_balance.touch_out
       expect{ oyster_max_balance.top_up 1 }.to change{ oyster_max_balance.balance }.by 1
     end
@@ -30,27 +32,36 @@ describe Oystercard do
   end
 
   context '#touch_in' do
-
     it 'can touch in' do
-      oyster_max_balance.touch_in
+      oyster_max_balance.touch_in(entry_station)
       expect(oyster_max_balance).to be_in_journey
     end
 
     it 'should raise an error if touching in with no funds' do
-      expect{ oyster_no_money.touch_in }.to raise_error 'insufficient funds'
+      expect{ oyster_no_money.touch_in(entry_station) }.to raise_error 'insufficient funds'
+    end
+
+    it 'should remember entry_station after touch_in' do
+      subject.touch_in(entry_station)
+      expect(oyster_max_balance.entry_station).to eq entry_station
     end
   end
 
   context '#touch_out' do
     it 'can touch out' do
-      oyster_max_balance.touch_in
+      oyster_max_balance.touch_in(entry_station)
       oyster_max_balance.touch_out
       expect(oyster_max_balance).not_to be_in_journey
     end
 
     it 'should deduct from balance' do
-      oyster_max_balance.touch_in
+      oyster_max_balance.touch_in(entry_station)
       expect{ oyster_max_balance.touch_out }.to change{ oyster_max_balance.balance }.by(-Oystercard::MIN_CHARGE)
+    end
+
+    it 'should forget entry_station on touch_out' do
+      oyster_max_balance.touch_in(entry_station)
+      expect{ oyster_max_balance.touch_out }.to change{ oyster_max_balance.entry_station}.to(nil)
     end
   end
 
