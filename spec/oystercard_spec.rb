@@ -66,7 +66,7 @@ describe Oystercard do
       oyster_max_balance.touch_in(entry_station)
       expect { oyster_max_balance.touch_out(exit_station) }.to change { oyster_max_balance.balance }.by(-Oystercard::MIN_CHARGE)
     end
-    
+
     it 'should forget entry_station on touch_out' do
       oyster_max_balance.touch_in(entry_station)
       expect { oyster_max_balance.touch_out(exit_station) }.to change { oyster_max_balance.entry_station }.to(nil)
